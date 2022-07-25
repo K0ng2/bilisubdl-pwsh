@@ -24,8 +24,12 @@ function Get-Bilibili {
     foreach ($section in $epList.data.sections) {
       Write-Host $ep.ep_list_title
       foreach ($ep in $section.episodes) {
-        $ep_name = New-CleanText $ep.title_display
-        $filename = Join-Path $title ("{0}.{1}.srt" -f $ep_name, $lang)
+        $name = $ep.short_title_display
+        if ($ep.title_display) {
+          $ep_name = New-CleanText $ep.title_display
+          $name = "$name - $ep_name"
+        }
+        $filename = Join-Path $title "$name.$lang.srt"
         if ((Test-Path $filename) -and !($overwrite)) {
           Write-Warning "$filename : Already exists"
           continue
@@ -64,14 +68,12 @@ function New-SRT {
     }
     $content = $body[$i].content
     $location = $body[$i].location
-    if ($location -eq 2) {
-      $line = $content
-    } else {
-      $line = "{{\an$location}}$content"
+    if ($location -ne 2) {
+      $content = "{{\an$location}}$content"
     }
     $timeFrom = "{0:hh\:mm\:ss\,fff}" -f ([timespan]::fromseconds($body[$i].from))
     $timeTo = "{0:hh\:mm\:ss\,fff}" -f ([timespan]::fromseconds($body[$i].to))
-    $sub += "{0}`n$timeFrom --> $timeTo`n$line" -f ($i + 1)
+    $sub += "{0}`n$timeFrom --> $timeTo`n$content" -f ($i + 1)
   }
   return $sub
 }
