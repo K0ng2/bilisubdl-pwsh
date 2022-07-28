@@ -35,7 +35,6 @@ function Get-Bilibili {
           Write-Host "# $filename"
           continue
         }
-        if ()
         $rawSub = Get-BilibiliEpisode $ep.episode_id $lang
         New-SRT $rawSub.body | Out-File $filename
         Write-Host "* $filename"
