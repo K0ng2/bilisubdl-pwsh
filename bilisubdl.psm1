@@ -1,6 +1,7 @@
 $API_URL = "https://api.bilibili.tv/intl/gateway/web/v2"
 $INFO_EP_URL = $API_URL + "/ogv/play/{0}?season_id={1}"
-$EP_URL = $API_URL + "/subtitle?s_locale&episode_id="
+# $EP_URL = $API_URL + "/subtitle?s_locale&episode_id="
+$EP_URL = $API_URL + "/m/subtitle?ep_id="
 function Get-Bilibili {
   param(
     [string[]]$id,
@@ -11,32 +12,33 @@ function Get-Bilibili {
 
   foreach ($s in $id) {
     $info = Invoke-RestMethod -Method Get -Uri ($INFO_EP_URL -f 'season_info', $s)
-    $genres = @()
-    foreach ($genre in $info.data.season.styles) { $genres += $genre.title }
-    [PSCustomObject]@{
-      Title        = $info.data.season.title
-      Genres       = $genres -join ', '
-      TotalEpisode = $info.data.season.total_episodes_text
-    } | Format-List
+    # $genres = @()
+    # foreach ($genre in $info.data.season.styles) { $genres += $genre.title }
+    # [PSCustomObject]@{
+    #   Title        = $info.data.season.title
+    #   Genres       = $genres -join ', '
+    #   TotalEpisode = $info.data.season.total_episodes_text
+    # } | Format-List
     $epList = Invoke-RestMethod -Method Get -Uri ($INFO_EP_URL -f 'episodes', $s)
     $title = New-CleanText $info.data.season.title
     $null = New-Item -Name $title -ItemType "directory" -Force
     foreach ($section in $epList.data.sections) {
       Write-Host $ep.ep_list_title
       foreach ($ep in $section.episodes) {
-        $name = $ep.short_title_display
-        if ($ep.title_display) {
-          $ep_name = New-CleanText $ep.title_display
-          $name = "$name - $ep_name"
-        }
+        $name = New-CleanText $ep.title_display
+        # if ($ep.title_display) {
+          # $ep_name = New-CleanText $ep.title_display
+          # $name = "$name - $ep_name"
+        # }
         $filename = Join-Path $title "$name.$lang.srt"
         if ((Test-Path $filename) -and !($overwrite)) {
-          Write-Warning "$filename : Already exists"
+          Write-Host "# $filename"
           continue
         }
+        if ()
         $rawSub = Get-BilibiliEpisode $ep.episode_id $lang
         New-SRT $rawSub.body | Out-File $filename
-        Write-Host "Writing subtitle: $filename"
+        Write-Host "* $filename"
       }
     }
   }
@@ -49,7 +51,10 @@ function Get-BilibiliEpisode {
   )
   $episode = Invoke-RestMethod -Method Get -Uri "$EP_URL$id"
   foreach ($j in $episode.data.subtitles) {
-    if ($lang -eq $j.lang_key) {
+    if ($lang -eq $j.key) {
+      if ($j.is_machine) {
+        Write-Warning 'Machine translation'
+      }
       return Invoke-RestMethod -Method Get -Uri $j.url
     }
   }
