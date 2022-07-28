@@ -1,5 +1,5 @@
-$API_URL = "https://api.bilibili.tv/intl/gateway/web/v2"
-$INFO_EP_URL = $API_URL + "/ogv/play/{0}?season_id={1}"
+$API_URL = "https://api.bilibili.tv/intl/gateway"
+$INFO_EP_URL = $API_URL + "/web/v2/ogv/play/{0}?season_id={1}"
 # $EP_URL = $API_URL + "/subtitle?s_locale&episode_id="
 $EP_URL = $API_URL + "/m/subtitle?ep_id="
 function Get-Bilibili {
